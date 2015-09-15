@@ -1,29 +1,20 @@
 package ir.websearch.clustering.evaluate;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.InvalidParameterException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.OptionalDouble;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 public class EvaluateClustering {
 
-	private static final String NEW_LINE = System.lineSeparator(); 
-	private static final String QUERY_PREFIX = "q";
-	private static final String DOCUMENT_PREFIX = "doc";
-	private static final String DUMMAY_PREFIX = "dummy";
+	private static final String NEW_LINE = System.lineSeparator();
 
 	public static void main(String[] args) {
 		if (args.length != 3) {
@@ -48,8 +39,24 @@ public class EvaluateClustering {
 	}
 
 	private static Map<Integer, List<String>> createClusterNumToDocIDsMap(String clusteringOutputFile) {
-		// TODO Auto-generated method stub
-		return null;
+		Map<Integer, List<String>> clusterNumToDocIDs = null;
+		Path clusteringOutputPath = Paths.get(clusteringOutputFile);
+		try {
+			clusterNumToDocIDs = Files.lines(clusteringOutputPath)
+				.map (line -> {
+						String[] columns = line.split(",");
+						String docId = columns[0];
+						Integer clusterNum = Integer.parseInt(columns[1]);						
+						return new ImmutablePair<Integer, String>(clusterNum, docId);
+					})
+				.collect(Collectors.groupingBy(entry -> entry.getKey(), 
+						 Collectors.mapping((ImmutablePair<Integer, String> entry) -> entry.getValue(),
+						 Collectors.toList())));
+		} catch (IOException e) {
+			// None to do. return value will be null.
+		}
+
+		return clusterNumToDocIDs;
 	}
 
 	private static Map<String, String> createDocIDToClusterIDMap(String gsRootDir) {
