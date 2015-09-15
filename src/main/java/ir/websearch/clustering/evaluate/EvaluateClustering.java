@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -80,9 +81,77 @@ public class EvaluateClustering {
 					.max((e1, e2) -> Integer.compare(e1.right, e2.right)).get();
 			Integer clusterSize = docIDs.size();
 			double purity = dominantClass.right / (double)clusterSize;
-			System.out.println("Purity of cluster " + clusterNum + " is: " +  purity + "." + " Domonant Class is: " + dominantClass.left);
+			System.out.println("Purity of cluster " + clusterNum + " is: " +  purity + "." + " Domonant Class is: " + dominantClass.left);						
 		});
 		
+		// Calculating the RI (Rand Index).
+		// Convert the  from ClusterNumber to DocIDs Map to a list of pairs (Pair<ClusterNum, DocId).
+		List<ImmutablePair<Integer, String>> docIdsWithCluster = new ArrayList<>();
+		clusterNumToDocIDs.entrySet().stream().forEach(entry -> {
+			// Associate to each DocId it's cluster number and create a pair list. All to the accumulated list.
+			Integer clusterNum = entry.getKey();
+			List<String> docIDs = entry.getValue();
+			List<ImmutablePair<Integer, String>> docIdsInfo = docIDs.stream()
+				.map(docId -> new ImmutablePair<Integer, String>(clusterNum, docId))
+				.collect(Collectors.toCollection(ArrayList::new));
+			
+			docIdsWithCluster.addAll(docIdsInfo);
+		});
+		
+		/**
+         *  The number of pairs of points with the same class in the gold standard and also assigned to the same cluster in K.
+         */
+        int a = 0; 
+        /**
+         * The number of pairs of points with the same class in the gold standard, but in different clusters in K.
+         */
+        int b = 0;
+        /**
+         * The number of pairs of points with the same cluster in K, but with a different class in the gold standard.
+         */
+        int c = 0;
+        /**
+         * The number of pairs of points with different class in the gold standard and a different cluster in K.
+         */
+        int d = 0;
+        
+        int numOfDocs = docIdsWithCluster.size();
+        ImmutablePair<Integer, String> clousterDoc1 = null;
+        ImmutablePair<Integer, String> clousterDoc2 = null;
+        for (int i = 0; i < numOfDocs - 1; i++) {
+        	for (int j = i + 1; j < numOfDocs; j++) {
+        		clousterDoc1 = docIdsWithCluster.get(i);
+        		clousterDoc2 = docIdsWithCluster.get(j);
+
+        		String clusterID1 = gsDocIDToClusterID.get(clousterDoc1.getValue());
+        		String clusterID2 = gsDocIDToClusterID.get(clousterDoc2.getValue());
+        		if (clusterID1.equals(clusterID2)) {
+        			// Points have the same class in the gold standard. 
+        			if (clousterDoc1.getKey() == clousterDoc2.getKey()) {
+        				// Points assigned to same cluster.
+        				a++;
+        			} else {
+        				// Points are in a  different clusters in K.
+        				b++;
+        			}
+        		}
+        		else {
+        			// Points have a different class in the gold standard.
+        			if (clousterDoc1.getKey() == clousterDoc2.getKey()) {
+        				// Points assigned to same cluster.
+        				c++;
+        			}
+        			else {
+        				// Points are with a different class in the gold standard and a different cluster.
+        				d++;
+
+        			}
+        		}
+        	}
+        }
+        
+        float randIndex = ((float) (a + d)) / ((float) (a + b + c + d));
+        System.out.println("Rand Index: " + randIndex + ".");
 	}
 
 	private static Map<Integer, List<String>> createClusterNumToDocIDsMap(String clusteringOutputFile) {
