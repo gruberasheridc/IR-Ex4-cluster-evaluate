@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +13,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.MutablePair;
 
 public class EvaluateClustering {
 
@@ -48,38 +48,39 @@ public class EvaluateClustering {
 		// Calculate the purity of each cluster.
 		clusterNumToDocIDs.entrySet().forEach(entry -> {
 			Integer clusterNum = entry.getKey();
-			int businessCount = 0;
-			int entertainmentCount = 0;
-			int politicsCount = 0;
-			int sportCount = 0;
-			int techCount = 0;
+			MutablePair<String, Integer> businessCount = new MutablePair<>(BUSINESS, 0);
+			MutablePair<String, Integer> entertainmentCount = new MutablePair<>(ENTERTAINMENT, 0);
+			MutablePair<String, Integer> politicsCount = new MutablePair<>(POLITICS, 0);
+			MutablePair<String, Integer> sportCount = new MutablePair<>(SPORT, 0);
+			MutablePair<String, Integer> techCount = new MutablePair<>(TECH, 0);
 
 			List<String> docIDs = entry.getValue();
 			for (String docId : docIDs) {
 				String clusterID = gsDocIDToClusterID.get(docId);
 				switch (clusterID) {
 				case BUSINESS:
-					businessCount++;
+					businessCount.right++;
 					break;
 				case ENTERTAINMENT:
-					entertainmentCount++;
+					entertainmentCount.right++;
 					break;
 				case POLITICS:
-					politicsCount++;
+					politicsCount.right++;
 					break;
 				case SPORT:
-					sportCount++;
+					sportCount.right++;
 					break;
 				case TECH:
-					techCount++;
+					techCount.right++;
 					break;
 				};
 			}
 			
-			Integer dominantClass = Collections.max(Arrays.asList(businessCount, entertainmentCount, politicsCount, sportCount, techCount));
+			MutablePair<String,Integer> dominantClass = Stream.of(businessCount, entertainmentCount, politicsCount, sportCount, techCount)
+					.max((e1, e2) -> Integer.compare(e1.right, e2.right)).get();
 			Integer clusterSize = docIDs.size();
-			double purity = dominantClass / (double)clusterSize;
-			System.out.println("Purity of cluster " + clusterNum + " is: " +  purity + ".");
+			double purity = dominantClass.right / (double)clusterSize;
+			System.out.println("Purity of cluster " + clusterNum + " is: " +  purity + "." + " Domonant Class is: " + dominantClass.left);
 		});
 		
 	}
