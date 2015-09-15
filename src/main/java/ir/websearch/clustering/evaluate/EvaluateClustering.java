@@ -14,6 +14,11 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 
 public class EvaluateClustering {
 
+	private static final String BUSINESS = "business";
+	private static final String ENTERTAINMENT = "entertainment";
+	private static final String POLITICS = "politics";
+	private static final String SPORT = "sport";
+	private static final String TECH = "tech";
 	private static final String NEW_LINE = System.lineSeparator();
 
 	public static void main(String[] args) {
@@ -36,6 +41,38 @@ public class EvaluateClustering {
 			System.out.println("Faild to process the clustering algorithm output file: " + clusteringOutputFile + ".");
 			return;
 		}
+
+		// Calculate the purity of each cluster.
+		clusterNumToDocIDs.entrySet().forEach(entry -> {
+			Integer clusterNum = entry.getKey();
+			int businessCount = 0;
+			int entertainmentCount = 0;
+			int politicsCount = 0;
+			int sportCount = 0;
+			int techCount = 0;
+
+			List<String> docIDs = entry.getValue();
+			for (String docId : docIDs) {				
+				String clusterID = gsDocIDToClusterID.get(docId);
+				switch (clusterID) {
+				case BUSINESS:
+					businessCount++;
+					break;
+				case ENTERTAINMENT:
+					entertainmentCount++;
+					break;
+				case POLITICS:
+					politicsCount++;
+					break;
+				case SPORT:
+					sportCount++;
+					break;
+				case TECH:
+					techCount++;
+					break;
+				};
+			}
+		});
 	}
 
 	private static Map<Integer, List<String>> createClusterNumToDocIDsMap(String clusteringOutputFile) {
@@ -43,15 +80,15 @@ public class EvaluateClustering {
 		Path clusteringOutputPath = Paths.get(clusteringOutputFile);
 		try {
 			clusterNumToDocIDs = Files.lines(clusteringOutputPath)
-				.map (line -> {
+					.map (line -> {
 						String[] columns = line.split(",");
 						String docId = columns[0];
 						Integer clusterNum = Integer.parseInt(columns[1]);						
 						return new ImmutablePair<Integer, String>(clusterNum, docId);
 					})
-				.collect(Collectors.groupingBy(entry -> entry.getKey(), 
-						 Collectors.mapping((ImmutablePair<Integer, String> entry) -> entry.getValue(),
-						 Collectors.toList())));
+					.collect(Collectors.groupingBy(entry -> entry.getKey(), 
+							Collectors.mapping((ImmutablePair<Integer, String> entry) -> entry.getValue(),
+									Collectors.toList())));
 		} catch (IOException e) {
 			// None to do. return value will be null.
 		}
