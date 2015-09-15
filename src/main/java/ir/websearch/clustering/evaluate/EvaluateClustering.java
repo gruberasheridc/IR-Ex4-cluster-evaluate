@@ -4,10 +4,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -52,7 +55,7 @@ public class EvaluateClustering {
 			int techCount = 0;
 
 			List<String> docIDs = entry.getValue();
-			for (String docId : docIDs) {				
+			for (String docId : docIDs) {
 				String clusterID = gsDocIDToClusterID.get(docId);
 				switch (clusterID) {
 				case BUSINESS:
@@ -72,7 +75,13 @@ public class EvaluateClustering {
 					break;
 				};
 			}
+			
+			Integer dominantClass = Collections.max(Arrays.asList(businessCount, entertainmentCount, politicsCount, sportCount, techCount));
+			Integer clusterSize = docIDs.size();
+			double purity = dominantClass / (double)clusterSize;
+			System.out.println("Purity of cluster " + clusterNum + " is: " +  purity + ".");
 		});
+		
 	}
 
 	private static Map<Integer, List<String>> createClusterNumToDocIDsMap(String clusteringOutputFile) {
