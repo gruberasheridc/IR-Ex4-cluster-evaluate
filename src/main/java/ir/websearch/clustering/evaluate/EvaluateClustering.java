@@ -81,7 +81,7 @@ public class EvaluateClustering {
 					.max((e1, e2) -> Integer.compare(e1.right, e2.right)).get();
 			Integer clusterSize = docIDs.size();
 			double purity = dominantClass.right / (double)clusterSize;
-			System.out.println("Purity of cluster " + clusterNum + " is: " +  purity + "." + " Domonant Class is: " + dominantClass.left);						
+			System.out.println("Purity of cluster " + clusterNum + " is: " +  purity + "." + " Dominant Class is: " + dominantClass.left);						
 		});
 		
 		// Calculating the RI (Rand Index).
