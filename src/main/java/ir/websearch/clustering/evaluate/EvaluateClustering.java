@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +22,6 @@ public class EvaluateClustering {
 	private static final String POLITICS = "politics";
 	private static final String SPORT = "sport";
 	private static final String TECH = "tech";
-	private static final String NEW_LINE = System.lineSeparator();
 
 	public static void main(String[] args) {
 		if (args.length != 3) {
@@ -46,6 +44,8 @@ public class EvaluateClustering {
 			return;
 		}
 
+		List<String> report = new ArrayList<>();
+		
 		// Calculate the purity of each cluster.
 		clusterNumToDocIDs.entrySet().forEach(entry -> {
 			Integer clusterNum = entry.getKey();
@@ -81,7 +81,9 @@ public class EvaluateClustering {
 					.max((e1, e2) -> Integer.compare(e1.right, e2.right)).get();
 			Integer clusterSize = docIDs.size();
 			double purity = dominantClass.right / (double)clusterSize;
-			System.out.println("Purity of cluster " + clusterNum + " is: " +  purity + "." + " Dominant Class is: " + dominantClass.left);						
+			String purityResults = "Purity of cluster " + clusterNum + " is: " +  purity + "." + " Dominant Class is: " + dominantClass.left;
+			System.out.println(purityResults);
+			report.add(purityResults);
 		});
 		
 		// Calculating the RI (Rand Index).
@@ -151,7 +153,17 @@ public class EvaluateClustering {
         }
         
         float randIndex = ((float) (a + d)) / ((float) (a + b + c + d));
-        System.out.println("Rand Index: " + randIndex + ".");
+        String riResult = "Rand Index: " + randIndex + ".";
+        System.out.println(riResult);
+        report.add(riResult);
+        
+		String reportFile = args[2];
+		Path outputPath = Paths.get(reportFile);
+		try {
+			Files.write(outputPath, report);
+		} catch (IOException e) {
+			System.out.println("Faild to write Report output file name: " + reportFile + ".");
+		}
 	}
 
 	private static Map<Integer, List<String>> createClusterNumToDocIDsMap(String clusteringOutputFile) {
